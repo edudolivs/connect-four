@@ -14,10 +14,11 @@ import random
 import sys
 
 from .agents import BOT_KINDS, DEFAULT_DEPTH, KINDS, make_agent
-from .arena import format_result, run_match
+from .arena import format_result
 from .board import RED, YELLOW
 from .game import play_game
 from .menu import Menu
+from .progress import run_match_with_progress
 from .render import player_name, use_color
 
 
@@ -53,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.games is not None:
-            print(format_result(run_match(args.red, args.yellow, args.games, args.seed, args.depth)))
+            print(format_result(run_match_with_progress(args.red, args.yellow, args.games, args.seed, args.depth)))
         elif args.red or args.yellow:
             rng = random.Random(args.seed)
 

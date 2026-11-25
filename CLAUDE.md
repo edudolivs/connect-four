@@ -19,7 +19,8 @@ python3 -m unittest -v                                    # run the test suite
 Agent kinds: `human`, `random`, `greedy`, `minimax` (`--depth` sets its search depth in plies, default 4;
 `--delay` sets the pause between bot moves when watching).
 Batches alternate who plays Red, print wins/draws/losses per side, and always report the seed so a
-run can be reproduced.
+run can be reproduced. While they run, a progress bar with ETA and running score is drawn on stderr
+(only when it is a terminal; `connect_four/progress.py`, fed by `run_match(..., on_game=...)`).
 
 ## Roadmap (doc section 6)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Callable
 
 from .agents import BOT_KINDS, DEFAULT_DEPTH, make_agent
 from .board import RED, YELLOW
@@ -35,12 +36,18 @@ class MatchResult:
 
 
 def run_match(
-    kind_a: str, kind_b: str, games: int, seed: int | None = None, depth: int = DEFAULT_DEPTH
+    kind_a: str,
+    kind_b: str,
+    games: int,
+    seed: int | None = None,
+    depth: int = DEFAULT_DEPTH,
+    on_game: Callable[[int, MatchResult], None] | None = None,
 ) -> MatchResult:
     """Play ``games`` games between two bot kinds. A plays Red in even games, B in odd ones.
 
     Without a seed one is picked and recorded, so every run can be reproduced.
-    ``depth`` is the search depth for minimax players.
+    ``depth`` is the search depth for minimax players. ``on_game(done, result)`` runs after
+    each game with the number of games finished and the partial result (e.g. for a progress bar).
     """
     for kind in (kind_a, kind_b):
         if kind not in BOT_KINDS:
@@ -69,6 +76,8 @@ def run_match(
             else:
                 outcome = "wins" if winner == color else "losses"
             result.stats[i]["red" if plays_red else "yellow"][outcome] += 1
+        if on_game:
+            on_game(game + 1, result)
     return result
 
 
