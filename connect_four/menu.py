@@ -7,9 +7,10 @@ import time
 from typing import Callable
 
 from .agents import BOT_KINDS, DEFAULT_DEPTH, KINDS, make_agent
-from .arena import format_result, run_match
+from .arena import format_result
 from .board import RED, YELLOW
 from .game import play_game
+from .progress import run_match_with_progress
 from .render import player_name
 
 DEFAULT_GAMES = 100
@@ -66,7 +67,7 @@ class Menu:
         kind_b = self._ask_kind("Bot B", BOT_KINDS)
         games = self._ask_int("Number of games", DEFAULT_GAMES)
         self._print("")
-        self._print(format_result(run_match(kind_a, kind_b, games, self._seed, self._depth)))
+        self._print(format_result(run_match_with_progress(kind_a, kind_b, games, self._seed, self._depth)))
 
     def _agent(self, kind: str, player: int):
         name = player_name(player, self._color) if kind == "human" else None

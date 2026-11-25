@@ -111,7 +111,7 @@ class TestMakeAgent(unittest.TestCase):
 
     def test_unknown_kind(self):
         with self.assertRaises(ValueError):
-            make_agent("alphabeta")
+            make_agent("mcts")
 
 
 if __name__ == "__main__":

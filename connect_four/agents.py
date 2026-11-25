@@ -7,10 +7,11 @@ from typing import Callable, Protocol
 
 from .board import COLS, Board, other
 from .evaluate import DEFAULT_WEIGHTS, Weights, evaluate
-from .search import SearchResult, minimax
+from .search import SearchResult, alphabeta, minimax
 
-KINDS = ("human", "random", "greedy", "minimax")
-BOT_KINDS = ("random", "greedy", "minimax")
+KINDS = ("human", "random", "greedy", "minimax", "alphabeta")
+BOT_KINDS = ("random", "greedy", "minimax", "alphabeta")
+SEARCH_KINDS = ("minimax", "alphabeta")
 DEFAULT_DEPTH = 4
 
 
@@ -100,6 +101,7 @@ class MinimaxAgent:
     """Searches ``depth`` plies with plain minimax and the heuristic in ``evaluate.py``."""
 
     is_human = False
+    search = staticmethod(minimax)
 
     def __init__(
         self, name: str = "Minimax", depth: int = DEFAULT_DEPTH, weights: Weights = DEFAULT_WEIGHTS
@@ -112,12 +114,24 @@ class MinimaxAgent:
         self.last_result: SearchResult | None = None  # nodes/score of the last search, for metrics
 
     def choose_move(self, board: Board) -> int:
-        result = minimax(board, self.depth, board.current_player, self._evaluate)
+        result = self.search(board, self.depth, board.current_player, self._evaluate)
         self.last_result = result
         return result.move
 
     def _evaluate(self, board: Board, player: int) -> int:
         return evaluate(board, player, self.weights)
+
+
+class AlphaBetaAgent(MinimaxAgent):
+    """Same moves as ``MinimaxAgent`` at the same depth, found with alpha-beta pruning
+    and center-first move ordering, so it visits far fewer nodes."""
+
+    search = staticmethod(alphabeta)
+
+    def __init__(
+        self, name: str = "AlphaBeta", depth: int = DEFAULT_DEPTH, weights: Weights = DEFAULT_WEIGHTS
+    ) -> None:
+        super().__init__(name, depth, weights)
 
 
 def make_agent(
@@ -128,7 +142,7 @@ def make_agent(
     print_fn: Callable[[str], None] = print,
     depth: int = DEFAULT_DEPTH,
 ) -> Agent:
-    """Build an agent by kind: ``human``, ``random``, ``greedy`` or ``minimax``."""
+    """Build an agent by kind: ``human``, ``random``, ``greedy``, ``minimax`` or ``alphabeta``."""
     label = name or kind.capitalize()
     if kind == "human":
         return HumanAgent(label, input_fn, print_fn)
@@ -138,4 +152,6 @@ def make_agent(
         return GreedyAgent(label, rng)
     if kind == "minimax":
         return MinimaxAgent(label, depth)
+    if kind == "alphabeta":
+        return AlphaBetaAgent(name or "AlphaBeta", depth)
     raise ValueError(f"unknown agent kind: {kind!r} (expected one of {', '.join(KINDS)})")

@@ -10,23 +10,27 @@ https://claude.ai/artifact/XirPuwNYULC7nnfWGbtR49 (read it through the Claude Do
 ```bash
 python3 -m connect_four                                   # menu: play/watch a game or run a batch
 python3 -m connect_four --red human --yellow greedy       # single game, skips the menu
-python3 -m connect_four --red human --yellow minimax --depth 4   # play against the search agent
+python3 -m connect_four --red human --yellow alphabeta --depth 7 # play against the search agent
 python3 -m connect_four --red greedy --yellow random --games 1000 --seed 42   # batch of bot games
+python3 -m connect_four --red alphabeta --yellow minimax --games 10 --depth 5  # compare search cost
 NO_COLOR=1 python3 -m connect_four                        # without ANSI colors
 python3 -m unittest -v                                    # run the test suite
 ```
 
-Agent kinds: `human`, `random`, `greedy`, `minimax` (`--depth` sets its search depth in plies, default 4;
-`--delay` sets the pause between bot moves when watching).
-Batches alternate who plays Red, print wins/draws/losses per side, and always report the seed so a
-run can be reproduced.
+Agent kinds: `human`, `random`, `greedy`, `minimax`, `alphabeta` (`--depth` sets the search depth in
+plies for both search agents, default 4; `--delay` sets the pause between bot moves when watching).
+Batches alternate who plays Red, print wins/draws/losses per side plus avg/max time and avg search
+nodes per move, and always report the seed so a run can be reproduced.
+Search agents are deterministic: a batch between two of them repeats the same two games. While they run, a progress bar with ETA and running score is drawn on stderr
+(only when it is a terminal; `connect_four/progress.py`, fed by `run_match(..., on_game=...)`).
 
 ## Roadmap (doc section 6)
 
 1. Board, rules, human vs. human — done (colored CLI game)
 2. Random and greedy agents — done, plus start menu and batch matches (start of the Arena)
-3. **Minimax with fixed depth** ← current step
-4. Alpha-beta pruning and move ordering (center columns first)
+3. Minimax with fixed depth — done
+4. **Alpha-beta pruning and move ordering (center columns first)** ← current step
+   (8× fewer nodes than minimax at depth 4, 33× at depth 6, on mid-game positions)
 5. Refined heuristic
 6. Iterative deepening (time limit) and transposition table (Zobrist hash or bitboard key)
 7. Experiments, charts, and report (optional: MCTS for comparison)
@@ -40,18 +44,23 @@ Keep responsibilities separate so algorithms can be swapped:
 - `Evaluator` (`connect_four/evaluate.py`): heuristic for non-terminal states — 4-cell windows with 2–3 own
   pieces, center-column bonus, opponent threat penalty; odd/even row threats come in step 5.
   **Keep weights as parameters** (`Weights`).
-- `Search` (`connect_four/search.py`): `minimax(board, depth, player, evaluate_fn)` → `SearchResult(move, score,
-  nodes)`. Alpha-beta, transposition table and time control go here next.
+- `Search` (`connect_four/search.py`): `minimax(board, depth, player, evaluate_fn)` and
+  `alphabeta(..., ordered=True)` → `SearchResult(move, score, nodes)`. Alpha-beta must return the
+  same move and score as minimax (tested on random positions); `ordered=False` tries columns left to
+  right, to measure the ordering gain. Transposition table and time control go here next.
 - `Agent` (`connect_four/agents.py`): single interface `choose_move(board) -> int` (the doc's
   `escolher_jogada(estado)`) plus `name` and `is_human`. Reference agents: `HumanAgent`,
   `RandomAgent`, `GreedyAgent` (win → block → avoid giving the opponent a win on top → random),
-  `MinimaxAgent(depth, weights)` (keeps `last_result` for metrics).
+  `MinimaxAgent(depth, weights)` (keeps `last_result` for metrics) and `AlphaBetaAgent` (subclass
+  that only swaps the `search` function).
   Bots take a `random.Random` for reproducibility; build them with `make_agent(kind, ...)`.
   New agents: add a class and register its kind in `KINDS`/`BOT_KINDS` and `make_agent`.
 - `Game` (`connect_four/game.py`): `run_game` (no I/O, used by batches/search experiments) and
   `play_game` (on-screen wrapper).
-- `Arena` (`connect_four/arena.py`): `run_match(kind_a, kind_b, games, seed, depth)` → `MatchResult`;
-  `format_result` prints the table. Extend here for tournaments and metrics (doc section 5).
+- `Arena` (`connect_four/arena.py`): `run_match(kind_a, kind_b, games, seed, depth)` → `MatchResult`
+  with outcomes and per-player `MoveMetrics` (moves, avg/max seconds, avg nodes; agents are wrapped
+  to time `choose_move` and read `last_result.nodes`). `format_result` prints the table.
+  Extend here for tournaments (doc section 5).
 - Menu/CLI (`connect_four/menu.py`, `connect_four/__main__.py`): menu with no args, argparse flags otherwise.
 - Rendering (`connect_four/render.py`): ANSI-colored board text, kept out of `Board`.
 

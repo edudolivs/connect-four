@@ -45,7 +45,7 @@ class TestMenu(unittest.TestCase):
         # and "0" / "abc" are refused as game counts.
         out = run_menu(["x", "2", "human", "9", "1", "2", "3", "0", "abc", "1", "q"])
         self.assertIn("Please choose 1, 2 or q.", out)
-        self.assertEqual(out.count("Please choose one of: 2 random, 3 greedy, 4 minimax."), 3)
+        self.assertEqual(out.count("Please choose one of: 2 random, 3 greedy, 4 minimax, 5 alphabeta."), 3)
         self.assertEqual(out.count("Please type a whole number of at least 1."), 2)
         self.assertIn("random vs greedy: 1 game,", out)
 
