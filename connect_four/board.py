@@ -59,11 +59,14 @@ class Board:
     def is_terminal(self) -> bool:
         return self._winner is not None or self.is_full()
 
-    def is_winning_move(self, col: int) -> bool:
-        """Would the current player win by playing ``col``? Leaves the board unchanged."""
+    def is_winning_move(self, col: int, player: int | None = None) -> bool:
+        """Would ``player`` (default: the player to move) win by dropping in ``col``?
+
+        Leaves the board unchanged.
+        """
         if not self.is_legal(col):
             return False
-        return self._connects(self._heights[col], col, self.current_player)
+        return self._connects(self._heights[col], col, player or self.current_player)
 
     # --- mutations ---------------------------------------------------------
 
