@@ -2,7 +2,7 @@ import random
 import unittest
 from unittest import mock
 
-from connect_four.agents import GreedyAgent, HumanAgent, RandomAgent, make_agent
+from connect_four.agents import GreedyAgent, HumanAgent, MinimaxAgent, RandomAgent, make_agent
 from connect_four.board import RED, Board
 
 
@@ -84,16 +84,34 @@ class TestGreedyAgent(unittest.TestCase):
         self.assertEqual(board.moves_played, 5)
 
 
+class TestMinimaxAgent(unittest.TestCase):
+    def test_takes_win_and_records_search(self):
+        board = board_from_moves([0, 1, 0, 1, 0, 1])
+        agent = MinimaxAgent(depth=2)
+        self.assertEqual(agent.choose_move(board), 0)
+        self.assertGreater(agent.last_result.nodes, 1)
+
+    def test_blocks_threat(self):
+        board = board_from_moves([0, 1, 0, 2, 0])
+        self.assertEqual(MinimaxAgent(depth=2).choose_move(board), 0)
+
+    def test_rejects_depth_below_one(self):
+        with self.assertRaises(ValueError):
+            MinimaxAgent(depth=0)
+
+
 class TestMakeAgent(unittest.TestCase):
     def test_kinds(self):
         self.assertIsInstance(make_agent("human", "Red"), HumanAgent)
         self.assertIsInstance(make_agent("random"), RandomAgent)
         self.assertIsInstance(make_agent("greedy"), GreedyAgent)
         self.assertEqual(make_agent("greedy").name, "Greedy")
+        self.assertIsInstance(make_agent("minimax"), MinimaxAgent)
+        self.assertEqual(make_agent("minimax", depth=2).depth, 2)
 
     def test_unknown_kind(self):
         with self.assertRaises(ValueError):
-            make_agent("minimax")
+            make_agent("alphabeta")
 
 
 if __name__ == "__main__":

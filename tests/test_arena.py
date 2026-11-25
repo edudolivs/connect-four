@@ -38,6 +38,10 @@ class TestRunMatch(unittest.TestCase):
         result = run_match("greedy", "random", 200, seed=42)
         self.assertGreater(result.totals(0)["wins"], 180)
 
+    def test_minimax_beats_random(self):
+        result = run_match("minimax", "random", 10, seed=1, depth=3)
+        self.assertGreaterEqual(result.totals(0)["wins"], 9)
+
     def test_rejects_humans_and_bad_counts(self):
         with self.assertRaises(ValueError):
             run_match("human", "random", 10)

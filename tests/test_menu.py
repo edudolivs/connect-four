@@ -45,7 +45,7 @@ class TestMenu(unittest.TestCase):
         # and "0" / "abc" are refused as game counts.
         out = run_menu(["x", "2", "human", "9", "1", "2", "3", "0", "abc", "1", "q"])
         self.assertIn("Please choose 1, 2 or q.", out)
-        self.assertEqual(out.count("Please choose one of: 2 random, 3 greedy."), 3)
+        self.assertEqual(out.count("Please choose one of: 2 random, 3 greedy, 4 minimax."), 3)
         self.assertEqual(out.count("Please type a whole number of at least 1."), 2)
         self.assertIn("random vs greedy: 1 game,", out)
 
@@ -73,6 +73,18 @@ class TestCommandLine(unittest.TestCase):
     def test_batch_needs_both_players(self):
         code, _, _ = self.run_main(["--games", "10"])
         self.assertEqual(code, 2)
+
+    def test_minimax_batch_from_flags(self):
+        code, out, _ = self.run_main(
+            ["--red", "minimax", "--yellow", "random", "--games", "2", "--seed", "1", "--depth", "2"]
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("minimax vs random: 2 games", out)
+
+    def test_rejects_depth_below_one(self):
+        code, _, err = self.run_main(["--red", "minimax", "--yellow", "random", "--depth", "0"])
+        self.assertEqual(code, 2)
+        self.assertIn("--depth must be at least 1", err)
 
     def test_single_bot_game_from_flags(self):
         code, out, _ = self.run_main(["--red", "greedy", "--yellow", "random", "--delay", "0", "--seed", "1"])

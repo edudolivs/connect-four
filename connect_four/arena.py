@@ -6,7 +6,7 @@ import random
 from collections import Counter
 from dataclasses import dataclass, field
 
-from .agents import BOT_KINDS, make_agent
+from .agents import BOT_KINDS, DEFAULT_DEPTH, make_agent
 from .board import RED, YELLOW
 from .game import run_game
 
@@ -34,10 +34,13 @@ class MatchResult:
         return self.total_moves / self.games if self.games else 0.0
 
 
-def run_match(kind_a: str, kind_b: str, games: int, seed: int | None = None) -> MatchResult:
+def run_match(
+    kind_a: str, kind_b: str, games: int, seed: int | None = None, depth: int = DEFAULT_DEPTH
+) -> MatchResult:
     """Play ``games`` games between two bot kinds. A plays Red in even games, B in odd ones.
 
     Without a seed one is picked and recorded, so every run can be reproduced.
+    ``depth`` is the search depth for minimax players.
     """
     for kind in (kind_a, kind_b):
         if kind not in BOT_KINDS:
@@ -48,8 +51,8 @@ def run_match(kind_a: str, kind_b: str, games: int, seed: int | None = None) -> 
         seed = random.randrange(1_000_000)
 
     rng = random.Random(seed)
-    agent_a = make_agent(kind_a, rng=rng)
-    agent_b = make_agent(kind_b, rng=rng)
+    agent_a = make_agent(kind_a, rng=rng, depth=depth)
+    agent_b = make_agent(kind_b, rng=rng, depth=depth)
     result = MatchResult(kind_a, kind_b, games, seed)
 
     for game in range(games):

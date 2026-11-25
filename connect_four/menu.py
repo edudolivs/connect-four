@@ -6,7 +6,7 @@ import random
 import time
 from typing import Callable
 
-from .agents import BOT_KINDS, KINDS, make_agent
+from .agents import BOT_KINDS, DEFAULT_DEPTH, KINDS, make_agent
 from .arena import format_result, run_match
 from .board import RED, YELLOW
 from .game import play_game
@@ -30,6 +30,7 @@ class Menu:
         delay: float = 0.6,
         seed: int | None = None,
         sleep_fn: Callable[[float], None] = time.sleep,
+        depth: int = DEFAULT_DEPTH,
     ) -> None:
         self._input = input_fn
         self._print = print_fn
@@ -38,6 +39,7 @@ class Menu:
         self._seed = seed
         self._rng = random.Random(seed)
         self._sleep = sleep_fn
+        self._depth = depth
 
     def run(self) -> None:
         while True:
@@ -64,11 +66,11 @@ class Menu:
         kind_b = self._ask_kind("Bot B", BOT_KINDS)
         games = self._ask_int("Number of games", DEFAULT_GAMES)
         self._print("")
-        self._print(format_result(run_match(kind_a, kind_b, games, self._seed)))
+        self._print(format_result(run_match(kind_a, kind_b, games, self._seed, self._depth)))
 
     def _agent(self, kind: str, player: int):
         name = player_name(player, self._color) if kind == "human" else None
-        return make_agent(kind, name, self._rng, self._input, self._print)
+        return make_agent(kind, name, self._rng, self._input, self._print, self._depth)
 
     def _ask_kind(self, label: str, kinds: tuple[str, ...]) -> str:
         # Numbers follow KINDS everywhere, so "3" is always greedy, whichever list is shown.

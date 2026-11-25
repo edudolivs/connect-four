@@ -6,9 +6,12 @@ import random
 from typing import Callable, Protocol
 
 from .board import COLS, Board, other
+from .evaluate import DEFAULT_WEIGHTS, Weights, evaluate
+from .search import SearchResult, minimax
 
-KINDS = ("human", "random", "greedy")
-BOT_KINDS = ("random", "greedy")
+KINDS = ("human", "random", "greedy", "minimax")
+BOT_KINDS = ("random", "greedy", "minimax")
+DEFAULT_DEPTH = 4
 
 
 class Agent(Protocol):
@@ -93,14 +96,39 @@ class GreedyAgent:
             board.undo()
 
 
+class MinimaxAgent:
+    """Searches ``depth`` plies with plain minimax and the heuristic in ``evaluate.py``."""
+
+    is_human = False
+
+    def __init__(
+        self, name: str = "Minimax", depth: int = DEFAULT_DEPTH, weights: Weights = DEFAULT_WEIGHTS
+    ) -> None:
+        if depth < 1:
+            raise ValueError("depth must be at least 1")
+        self.name = name
+        self.depth = depth
+        self.weights = weights
+        self.last_result: SearchResult | None = None  # nodes/score of the last search, for metrics
+
+    def choose_move(self, board: Board) -> int:
+        result = minimax(board, self.depth, board.current_player, self._evaluate)
+        self.last_result = result
+        return result.move
+
+    def _evaluate(self, board: Board, player: int) -> int:
+        return evaluate(board, player, self.weights)
+
+
 def make_agent(
     kind: str,
     name: str | None = None,
     rng: random.Random | None = None,
     input_fn: Callable[[str], str] = input,
     print_fn: Callable[[str], None] = print,
+    depth: int = DEFAULT_DEPTH,
 ) -> Agent:
-    """Build an agent by kind: ``human``, ``random`` or ``greedy``."""
+    """Build an agent by kind: ``human``, ``random``, ``greedy`` or ``minimax``."""
     label = name or kind.capitalize()
     if kind == "human":
         return HumanAgent(label, input_fn, print_fn)
@@ -108,4 +136,6 @@ def make_agent(
         return RandomAgent(label, rng)
     if kind == "greedy":
         return GreedyAgent(label, rng)
+    if kind == "minimax":
+        return MinimaxAgent(label, depth)
     raise ValueError(f"unknown agent kind: {kind!r} (expected one of {', '.join(KINDS)})")
