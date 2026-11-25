@@ -5,6 +5,7 @@ Examples:
     python3 -m connect_four --red human --yellow greedy      # single game
     python3 -m connect_four --red greedy --yellow random --games 1000 --seed 42   # batch
     python3 -m connect_four --red human --yellow minimax --depth 4  # play against minimax
+    python3 -m connect_four --red alphabeta --yellow minimax --games 20 --depth 5  # compare search
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", type=int, help="random seed, for reproducible runs")
     parser.add_argument(
         "--depth", type=int, default=DEFAULT_DEPTH,
-        help=f"search depth in plies for minimax players (default {DEFAULT_DEPTH})",
+        help=f"search depth in plies for minimax/alphabeta players (default {DEFAULT_DEPTH})",
     )
     parser.add_argument("--delay", type=float, default=0.6, help="seconds between moves when watching bots (default 0.6)")
     return parser
